@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --panel: #1a1a1a;
+      --display-bg: #0a0a0a;
+      --accent: #e8ff00;
+      --accent2: #ff4d00;
+      --text: #f0f0f0;
+      --btn-bg: #222;
+      --btn-hover: #2e2e2e;
+      --btn-active: #3a3a3a;
+      --border: #333;
+      --shadow: 0 8px 40px rgba(0,0,0,0.7);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Share Tech Mono', monospace;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(232,255,0,0.04) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(255,77,0,0.04) 0%, transparent 50%);
+    }
+
+    .calc-wrapper {
+      position: relative;
+    }
+
+    .calc-label {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.4em;
+      color: #444;
+      text-align: center;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .calculator {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      width: 320px;
+      padding: 24px;
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.05);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .calculator::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+    }
+
+    /* Display */
+    .display {
+      background: var(--display-bg);
+      border: 1px solid #111;
+      border-radius: 2px;
+      padding: 16px 18px 12px;
+      margin-bottom: 20px;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: flex-end;
+      gap: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .display::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.08) 2px,
+        rgba(0,0,0,0.08) 4px
+      );
+      pointer-events: none;
+    }
+
+    .display-expression {
+      font-size: 13px;
+      color: #555;
+      min-height: 18px;
+      word-break: break-all;
+      text-align: right;
+    }
+
+    .display-value {
+      font-size: 38px;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+      word-break: break-all;
+      text-align: right;
+      line-height: 1;
+      text-shadow: 0 0 20px rgba(232,255,0,0.3);
+      transition: transform 0.08s ease;
+    }
+
+    .display-value.pop {
+      transform: scale(1.04);
+    }
+
+    /* Buttons */
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      background: var(--btn-bg);
+      color: var(--text);
+      border: 1px solid #2a2a2a;
+      border-radius: 3px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 16px;
+      padding: 0;
+      height: 58px;
+      cursor: pointer;
+      transition: background 0.1s, transform 0.08s, box-shadow 0.1s, color 0.1s;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 0 #111, 0 5px 8px rgba(0,0,0,0.4);
+      outline: none;
+    }
+
+    button::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0);
+      transition: background 0.1s;
+    }
+
+    button:hover {
+      background: var(--btn-hover);
+      box-shadow: 0 4px 0 #0a0a0a, 0 5px 12px rgba(0,0,0,0.5);
+    }
+
+    button:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #111;
+    }
+
+    button:active::after {
+      background: rgba(255,255,255,0.05);
+    }
+
+    /* Operator buttons */
+    button.op {
+      color: var(--accent);
+      background: #1e1e14;
+      border-color: #2e2e1a;
+      font-size: 20px;
+    }
+    button.op:hover { background: #252516; }
+
+    /* Equals button */
+    button.equals {
+      background: var(--accent);
+      color: #0a0a0a;
+      font-size: 22px;
+      border-color: var(--accent);
+      box-shadow: 0 4px 0 #8a9900, 0 5px 20px rgba(232,255,0,0.2);
+      font-weight: bold;
+    }
+    button.equals:hover {
+      background: #f0ff30;
+      box-shadow: 0 4px 0 #8a9900, 0 5px 24px rgba(232,255,0,0.35);
+    }
+    button.equals:active {
+      box-shadow: 0 1px 0 #8a9900, 0 2px 10px rgba(232,255,0,0.2);
+    }
+
+    /* Clear / special */
+    button.clear {
+      color: var(--accent2);
+      background: #1a0f0a;
+      border-color: #2e1a10;
+    }
+    button.clear:hover { background: #221410; }
+
+    button.zero { grid-column: span 2; }
+
+    /* Ripple */
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      width: 60px; height: 60px;
+      background: rgba(255,255,255,0.08);
+      transform: scale(0);
+      animation: ripple-anim 0.4s linear;
+      pointer-events: none;
+    }
+    @keyframes ripple-anim {
+      to { transform: scale(4); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="calc-wrapper">
+  <div class="calc-label">Basic Calculator v1.0</div>
+  <div class="calculator">
+    <div class="display">
+      <div class="display-expression" id="expression"></div>
+      <div class="display-value" id="display">0</div>
+    </div>
+    <div class="buttons">
+      <!-- Row 1 -->
+      <button class="clear" onclick="clearAll()">AC</button>
+      <button class="clear" onclick="toggleSign()">+/−</button>
+      <button class="clear" onclick="percent()">%</button>
+      <button class="op" onclick="setOp('/')">÷</button>
+
+      <!-- Row 2 -->
+      <button onclick="input('7')">7</button>
+      <button onclick="input('8')">8</button>
+      <button onclick="input('9')">9</button>
+      <button class="op" onclick="setOp('*')">×</button>
+
+      <!-- Row 3 -->
+      <button onclick="input('4')">4</button>
+      <button onclick="input('5')">5</button>
+      <button onclick="input('6')">6</button>
+      <button class="op" onclick="setOp('-')">−</button>
+
+      <!-- Row 4 -->
+      <button onclick="input('1')">1</button>
+      <button onclick="input('2')">2</button>
+      <button onclick="input('3')">3</button>
+      <button class="op" onclick="setOp('+')">+</button>
+
+      <!-- Row 5 -->
+      <button class="zero" onclick="input('0')">0</button>
+      <button onclick="input('.')">.</button>
+      <button class="equals" onclick="calculate()">=</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let current = '0';
+  let prev = null;
+  let operator = null;
+  let resetNext = false;
+
+  const display = document.getElementById('display');
+  const expression = document.getElementById('expression');
+
+  function updateDisplay(val) {
+    display.textContent = val;
+    display.classList.remove('pop');
+    void display.offsetWidth;
+    display.classList.add('pop');
+  }
+
+  function input(val) {
+    if (resetNext) { current = ''; resetNext = false; }
+    if (val === '.' && current.includes('.')) return;
+    if (current === '0' && val !== '.') current = val;
+    else current += val;
+    updateDisplay(current);
+  }
+
+  function setOp(op) {
+    if (operator && !resetNext) calculate(true);
+    prev = parseFloat(current);
+    operator = op;
+    resetNext = true;
+    const symbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+    expression.textContent = prev + ' ' + symbols[op];
+  }
+
+  function calculate(silent = false) {
+    if (operator === null || prev === null) return;
+    const cur = parseFloat(current);
+    const symbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+    if (!silent) expression.textContent = prev + ' ' + symbols[operator] + ' ' + cur + ' =';
+    let result;
+    switch (operator) {
+      case '+': result = prev + cur; break;
+      case '-': result = prev - cur; break;
+      case '*': result = prev * cur; break;
+      case '/': result = cur === 0 ? 'Error' : prev / cur; break;
+    }
+    const formatted = result === 'Error' ? 'Error' :
+      parseFloat(result.toFixed(10)).toString();
+    current = formatted;
+    updateDisplay(formatted);
+    if (!silent) { operator = null; prev = null; }
+    resetNext = true;
+  }
+
+  function clearAll() {
+    current = '0'; prev = null; operator = null; resetNext = false;
+    expression.textContent = '';
+    updateDisplay('0');
+  }
+
+  function toggleSign() {
+    current = (parseFloat(current) * -1).toString();
+    updateDisplay(current);
+  }
+
+  function percent() {
+    current = (parseFloat(current) / 100).toString();
+    updateDisplay(current);
+  }
+
+  // Keyboard support
+  document.addEventListener('keydown', e => {
+    if (e.key >= '0' && e.key <= '9') input(e.key);
+    else if (e.key === '.') input('.');
+    else if (e.key === '+') setOp('+');
+    else if (e.key === '-') setOp('-');
+    else if (e.key === '*') setOp('*');
+    else if (e.key === '/') { e.preventDefault(); setOp('/'); }
+    else if (e.key === 'Enter' || e.key === '=') calculate();
+    else if (e.key === 'Backspace') {
+      current = current.length > 1 ? current.slice(0, -1) : '0';
+      updateDisplay(current);
+    }
+    else if (e.key === 'Escape') clearAll();
+  });
+
+  // Ripple effect
+  document.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      const r = document.createElement('span');
+      r.className = 'ripple';
+      const rect = btn.getBoundingClientRect();
+      r.style.left = (e.clientX - rect.left - 30) + 'px';
+      r.style.top  = (e.clientY - rect.top  - 30) + 'px';
+      btn.appendChild(r);
+      setTimeout(() => r.remove(), 400);
+    });
+  });
+</script>
+</body>
+</html>
